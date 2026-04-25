@@ -1,0 +1,17 @@
+progress:
+
+data collection - the csv , json or any date - could be messy unstructured
+
+data preprocessing - dataset find and clean it the question and answer data set
+ nltk 
+-- usingfor preprocessing not spaCy for now
+-- env and nltk setup with all needed libraries
+-- ntlk apply - on the dataset with all the preprocessing
+
+vectorization
+making tf idf vectors of all cleaned question
+
+user input:
+doing preprocessing , tf idf vectorization and then comparing with cosine similarity 
+which gives a score from 0 to 1 to all rows of cleaned question
+will select max output and print the corresponding answer
