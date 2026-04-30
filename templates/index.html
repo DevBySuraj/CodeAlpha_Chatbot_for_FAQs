@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Amazon AI Support</title>
+    <!-- <link rel="stylesheet" href="index.css"> -->
+    <!-- <script src="script.js" defer></script> -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="chat-container">
+        <div class="chat-header">
+            <h2>📦 Amazon Support Bot</h2>
+            <span class="status-dot"></span> Online
+        </div>
+        
+        <div id="chat-box" class="chat-box">
+            <!-- Messages will appear here -->
+            <div class="message bot">Hello! I'm your AI assistant. How can I help you with your Amazon order today?</div>
+        </div>
+
+        <div class="input-area">
+            <input type="text" id="user-input" placeholder="Type your question here..." autocomplete="off">
+            <button id="send-btn">Send</button>
+        </div>
+    </div>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>

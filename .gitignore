@@ -207,3 +207,8 @@ marimo/_lsp/
 __marimo__/
 
 
+amazon_data.csv
+cleaned_amazon_data.csv
+faq_test_dataset.csv
+project document.docx
+single_qna.csv
