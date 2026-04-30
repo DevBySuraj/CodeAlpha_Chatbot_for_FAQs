@@ -94,25 +94,39 @@ def process():
     
     # Process
     text = user_query.lower()
-    text = text.translate(str.maketrans('', '', string.punctuation))
     
-    # 1. Tokenize
-    tokens = nltk.word_tokenize(text)
+    # Tokenize original for surgery visualization
+    raw_tokens = nltk.word_tokenize(text)
     
-    # 2. Stop-word removal
-    no_stop_tokens = [word for word in tokens if word not in stop_words]
+    surgery_path = []
+    no_stop_tokens = []
+    clean_tokens = []
     
-    # 3. Lemmatize
-    clean_tokens = [lemmatizer.lemmatize(word) for word in no_stop_tokens]
+    for token in raw_tokens:
+        clean_word = token.translate(str.maketrans('', '', string.punctuation))
+        
+        if not clean_word:
+            surgery_path.append({"word": token, "status": "removed", "reason": "punctuation"})
+            continue
+            
+        if clean_word in stop_words:
+            surgery_path.append({"word": token, "status": "removed", "reason": "stopword"})
+            continue
+            
+        no_stop_tokens.append(clean_word)
+        lemma = lemmatizer.lemmatize(clean_word)
+        clean_tokens.append(lemma)
+        surgery_path.append({"word": token, "status": "kept", "lemma": lemma})
     
     cleaned_text = " ".join(clean_tokens)
     
     return jsonify({
         "raw": user_query,
-        "tokens": tokens,
+        "tokens": raw_tokens,
         "no_stop_tokens": no_stop_tokens,
         "cleaned_tokens": clean_tokens,
-        "cleaned_text": cleaned_text
+        "cleaned_text": cleaned_text,
+        "surgery_path": surgery_path
     })
 
 @app.route('/vectorize', methods=['POST'])

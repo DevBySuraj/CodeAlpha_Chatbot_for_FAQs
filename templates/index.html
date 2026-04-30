@@ -8,7 +8,19 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
 </head>
 <body>
-    <div class="app-layout">
+    <!-- Navigation Bar -->
+    <nav class="navbar glass-panel">
+        <div class="nav-brand">🤖 Surgical FAQ</div>
+        <div class="nav-links">
+            <a href="#">Home</a>
+            <a href="#how-to-use">How to Use</a>
+            <a href="#about">About</a>
+        </div>
+    </nav>
+
+    <!-- Main App Content -->
+    <div class="app-wrapper">
+        <div class="app-layout">
         <!-- Left Side: The Chatbot UI -->
         <div class="chat-container glass-panel">
             <div class="chat-header">
@@ -40,7 +52,7 @@
             <div class="pipeline-scroll">
                 <!-- Step 1: Raw Input -->
                 <div class="step-card" id="card-raw">
-                    <span class="step-label">1. RAW INPUT</span>
+                    <span class="step-label">1. RAW INPUT <span class="info-icon" title="This is exactly what you typed into the chat window.">?</span></span>
                     <div class="step-value" id="step-raw">Waiting for input...</div>
                 </div>
 
@@ -48,21 +60,13 @@
 
                 <!-- Step 2: NLTK Surgical Cleaning -->
                 <div class="step-card" id="card-cleaned">
-                    <span class="step-label">2. NLTK SURGICAL CLEANING</span>
+                    <span class="step-label">2. NLTK SURGICAL CLEANING <span class="info-icon" title="NLTK (Natural Language Toolkit) breaks sentences into 'tokens' and reduces words to their root form (Lemmatization) so 'shipping' and 'ship' are treated the same.">?</span></span>
                     
                     <div class="sub-step">
-                        <small>Tokenized:</small>
-                        <div class="step-value highlight" id="step-tokens">--</div>
-                    </div>
-                    
-                    <div class="sub-step mt-2">
-                        <small>Stop-words Removed:</small>
-                        <div class="step-value highlight" id="step-no-stopwords">--</div>
-                    </div>
-                    
-                    <div class="sub-step mt-2">
-                        <small>Lemmatized:</small>
-                        <div class="step-value highlight" id="step-lemmatized">--</div>
+                        <small>The Surgery (Dimensionality Reduction):</small>
+                        <div class="surgery-container" id="step-surgery">
+                            --
+                        </div>
                     </div>
                 </div>
 
@@ -70,9 +74,12 @@
 
                 <!-- Step 3: TF-IDF Vector Space -->
                 <div class="step-card" id="card-vector">
-                    <span class="step-label">3. TF-IDF VECTOR SPACE</span>
-                    <div class="step-value vector-container" id="step-vector">
-                        --
+                    <span class="step-label">3. TF-IDF VECTOR SPACE <span class="info-icon" title="The computer maps words to a mathematical matrix. Common words get 0.0 weight, rare unique words get higher weights.">?</span></span>
+                    <div class="sub-step mt-2">
+                        <small>Token-to-Vector Heatmap:</small>
+                        <div class="heatmap-container" id="step-vector">
+                            --
+                        </div>
                     </div>
                 </div>
 
@@ -80,9 +87,27 @@
 
                 <!-- Step 4: Similarity Engine -->
                 <div class="step-card" id="card-similarity">
-                    <span class="step-label">4. COSINE SIMILARITY ENGINE</span>
+                    <span class="step-label">4. COSINE SIMILARITY ENGINE <span class="info-icon" title="We use the Cosine Similarity formula to measure the mathematical angular distance between your question and our database.">?</span></span>
                     
-                    <div class="sub-step">
+                    <div class="angular-graph-container" id="angular-graph" style="display: none;">
+                        <svg width="100%" height="160" id="similarity-svg">
+                            <!-- Draw axes -->
+                            <line x1="20" y1="140" x2="280" y2="140" stroke="rgba(255,255,255,0.2)" stroke-width="2" />
+                            <line x1="20" y1="140" x2="20" y2="10" stroke="rgba(255,255,255,0.2)" stroke-width="2" />
+                            <!-- Draw best match (fixed on X axis) -->
+                            <line id="svg-best-match" x1="20" y1="140" x2="250" y2="140" stroke="#22c55e" stroke-width="3" stroke-linecap="round" />
+                            <!-- Draw user query (animated angle) -->
+                            <line id="svg-user-query" x1="20" y1="140" x2="20" y2="140" stroke="#38bdf8" stroke-width="3" stroke-linecap="round" />
+                            <!-- Angle arc -->
+                            <path id="svg-angle-arc" d="" fill="none" stroke="#fbbf24" stroke-width="2" stroke-dasharray="4" />
+                            <!-- Labels -->
+                            <text id="svg-label-best" x="255" y="145" fill="#22c55e" font-size="10" font-family="Inter">Best Match FAQ</text>
+                            <text id="svg-label-user" x="20" y="140" fill="#38bdf8" font-size="10" font-family="Inter">User Query</text>
+                            <text id="svg-label-angle" x="50" y="120" fill="#fbbf24" font-size="12" font-family="Inter"></text>
+                        </svg>
+                    </div>
+
+                    <div class="sub-step mt-2">
                         <small>Word Cloud (Trigger Words):</small>
                         <div class="step-value vector-container" id="step-trigger-words">
                             --
@@ -106,12 +131,132 @@
 
                 <!-- Step 5: Final Decision -->
                 <div class="step-card" id="card-decision">
-                    <span class="step-label">5. DECISION LOGIC</span>
+                    <span class="step-label">5. DECISION LOGIC <span class="info-icon" title="Compares the final cosine similarity score against your set threshold to decide whether to answer or fallback.">?</span></span>
                     <div class="step-value" id="step-decision">--</div>
+                    <div class="failure-diagnostic" id="failure-diagnostic" style="display: none;"></div>
                 </div>
             </div>
         </div>
     </div>
+    </div>
+
+    <!-- Educational "How to Use" Section -->
+    <section id="how-to-use" class="how-to-use-section">
+        <div class="section-header">
+            <h2>🧠 How to Talk to an NLP Bot</h2>
+            <p>Our bot uses statistical mathematics (TF-IDF) rather than a Generative AI like ChatGPT. It doesn't "read" English; it calculates the frequency of important keywords. Here is how to format your questions to get the perfect match!</p>
+        </div>
+
+        <div class="examples-grid">
+            <!-- Example 1: The Rambler -->
+            <div class="example-card glass-panel">
+                <div class="example-header">
+                    <h3>🗣️ The Rambler</h3>
+                </div>
+                <div class="example-body">
+                    <p><strong>Messy Input:</strong> "Ummm hi bot, can u plz tell me where my package is???"</p>
+                    <div class="nlp-vision">
+                        <small>How NLP sees it (TF-IDF):</small>
+                        <div class="mock-tags">
+                            <span class="bad-tag">ummm</span><span class="bad-tag">hi</span><span class="bad-tag">bot</span>
+                            <span class="good-tag">tell</span><span class="good-tag">package</span>
+                        </div>
+                    </div>
+                    <p class="explanation">The NLP engine drops conversational filler. If you type too much fluff, it dilutes the weight of the important words.</p>
+                    <div class="better-input">
+                        <strong>✅ Better Input:</strong> "Where is my package?"
+                    </div>
+                </div>
+            </div>
+
+            <!-- Example 2: The Over-Explainer -->
+            <div class="example-card glass-panel">
+                <div class="example-header">
+                    <h3>📖 The Over-Explainer</h3>
+                </div>
+                <div class="example-body">
+                    <p><strong>Messy Input:</strong> "I ordered a blender yesterday for my mom's birthday but it arrived broken in half."</p>
+                    <div class="nlp-vision">
+                        <small>How NLP sees it (TF-IDF):</small>
+                        <div class="mock-tags">
+                            <span class="bad-tag">mom</span><span class="bad-tag">birthday</span><span class="bad-tag">yesterday</span>
+                            <span class="good-tag">arrived</span><span class="good-tag">broken</span>
+                        </div>
+                    </div>
+                    <p class="explanation">Adding context ("mom's birthday") introduces vocabulary that the FAQ database doesn't care about, confusing the similarity calculation.</p>
+                    <div class="better-input">
+                        <strong>✅ Better Input:</strong> "Item arrived broken or damaged."
+                    </div>
+                </div>
+            </div>
+
+            <!-- Example 3: The Slang User -->
+            <div class="example-card glass-panel">
+                <div class="example-header">
+                    <h3>😎 The Slang User</h3>
+                </div>
+                <div class="example-body">
+                    <p><strong>Messy Input:</strong> "Yo, how do I get my moolah back for this?"</p>
+                    <div class="nlp-vision">
+                        <small>How NLP sees it (TF-IDF):</small>
+                        <div class="mock-tags">
+                            <span class="bad-tag">yo</span><span class="bad-tag">moolah</span>
+                        </div>
+                    </div>
+                    <p class="explanation">Our dataset vocabulary is trained on standard Amazon FAQs. It won't recognize slang words like "moolah".</p>
+                    <div class="better-input">
+                        <strong>✅ Better Input:</strong> "How do I get a refund?"
+                    </div>
+                </div>
+            </div>
+
+            <!-- Example 4: The Vague Question -->
+            <div class="example-card glass-panel">
+                <div class="example-header">
+                    <h3>🌫️ The Vague Question</h3>
+                </div>
+                <div class="example-body">
+                    <p><strong>Messy Input:</strong> "It doesn't work."</p>
+                    <div class="nlp-vision">
+                        <small>How NLP sees it (TF-IDF):</small>
+                        <div class="mock-tags">
+                            <span class="good-tag">work</span>
+                        </div>
+                    </div>
+                    <p class="explanation">Too generic! The word "work" might match with hundreds of FAQs. Give the engine specific keywords to anchor onto.</p>
+                    <div class="better-input">
+                        <strong>✅ Better Input:</strong> "Machine is not turning on."
+                    </div>
+                </div>
+            </div>
+
+            <!-- Example 5: The Multi-Question -->
+            <div class="example-card glass-panel">
+                <div class="example-header">
+                    <h3>🔀 The Multi-Question</h3>
+                </div>
+                <div class="example-body">
+                    <p><strong>Messy Input:</strong> "Do you ship to Canada and how much is shipping and how long does it take?"</p>
+                    <div class="nlp-vision">
+                        <small>How NLP sees it (TF-IDF):</small>
+                        <div class="mock-tags">
+                            <span class="good-tag">ship</span><span class="good-tag">canada</span><span class="good-tag">cost</span><span class="good-tag">long</span>
+                        </div>
+                    </div>
+                    <p class="explanation">Multiple distinct topics pull the Cosine Similarity vector in different directions, resulting in a low confidence score across all of them.</p>
+                    <div class="better-input">
+                        <strong>✅ Better Input:</strong> "Do you ship to Canada?" (Ask one at a time)
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Simple Footer -->
+    <footer id="about">
+        <p>Built with Flask, NLTK, and Scikit-Learn to demonstrate Statistical NLP Pipelines.</p>
+    </footer>
+
     <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 </html>

@@ -53,16 +53,20 @@ function resetPipeline() {
     });
 
     document.getElementById('step-raw').innerText = 'Waiting for input...';
-    document.getElementById('step-tokens').innerText = '--';
-    document.getElementById('step-no-stopwords').innerText = '--';
-    document.getElementById('step-lemmatized').innerText = '--';
+    document.getElementById('step-surgery').innerHTML = '--';
     document.getElementById('step-vector').innerHTML = '--';
     document.getElementById('step-trigger-words').innerHTML = '--';
     document.getElementById('step-candidates').innerHTML = '<li class="empty-list">--</li>';
+    document.getElementById('angular-graph').style.display = 'none';
+    document.getElementById('svg-user-query').setAttribute('x2', '20');
+    document.getElementById('svg-user-query').setAttribute('y2', '140');
+    document.getElementById('svg-angle-arc').setAttribute('d', '');
+    document.getElementById('svg-label-angle').textContent = '';
     document.getElementById('step-confidence').innerText = '0%';
     document.getElementById('meter-fill').style.width = '0%';
     document.getElementById('meter-fill').style.background = 'linear-gradient(90deg, #38bdf8, #818cf8)';
     document.getElementById('step-decision').innerText = '--';
+    document.getElementById('failure-diagnostic').style.display = 'none';
 }
 
 function activateCard(cardId, connectorId = null) {
@@ -95,7 +99,7 @@ async function sendMessage() {
         activateCard('card-raw');
         await sleep(600);
         
-        document.getElementById('step-tokens').innerText = 'Skipped (Greeting detected)';
+        document.getElementById('step-surgery').innerText = 'Skipped (Greeting detected)';
         activateCard('card-cleaned', 'conn-1');
         await sleep(400);
         
@@ -131,9 +135,18 @@ async function sendMessage() {
         });
         const processData = await processRes.json();
         
-        document.getElementById('step-tokens').innerText = processData.tokens.length ? processData.tokens.join(' | ') : "No valid tokens";
-        document.getElementById('step-no-stopwords').innerText = processData.no_stop_tokens.length ? processData.no_stop_tokens.join(' | ') : "None";
-        document.getElementById('step-lemmatized').innerText = processData.cleaned_tokens.length ? processData.cleaned_tokens.join(' | ') : "None";
+        const surgeryContainer = document.getElementById('step-surgery');
+        surgeryContainer.innerHTML = '';
+        processData.surgery_path.forEach(item => {
+            const wordDiv = document.createElement('div');
+            wordDiv.classList.add('surgery-word', item.status);
+            if (item.status === 'removed') {
+                wordDiv.innerHTML = `${item.word} <small>${item.reason}</small>`;
+            } else {
+                wordDiv.innerHTML = `${item.word} <small>${item.lemma}</small>`;
+            }
+            surgeryContainer.appendChild(wordDiv);
+        });
         
         activateCard('card-cleaned', 'conn-1');
         await sleep(800);
@@ -151,11 +164,13 @@ async function sendMessage() {
         if (Object.keys(vectorizeData.important_terms).length === 0) {
             vectorContainer.innerHTML = '<i>Zero Vector (No matches in vocabulary)</i>';
         } else {
+            const maxWeight = Math.max(...Object.values(vectorizeData.important_terms));
             for (const [term, weight] of Object.entries(vectorizeData.important_terms)) {
                 const tag = document.createElement('div');
-                tag.classList.add('vector-tag');
-                tag.style.animationDelay = `${Math.random() * 0.3}s`;
-                tag.innerHTML = `${term} <span class="weight">${weight.toFixed(2)}</span>`;
+                tag.classList.add('heatmap-row');
+                const opacity = Math.max(0.15, weight / maxWeight);
+                tag.style.background = `rgba(56, 189, 248, ${opacity})`;
+                tag.innerHTML = `<div class="heatmap-word">${term}</div><div class="heatmap-weight">${weight.toFixed(3)}</div>`;
                 vectorContainer.appendChild(tag);
             }
         }
@@ -208,6 +223,26 @@ async function sendMessage() {
         if (confPercentage >= 80) meter.style.background = "#22c55e";
         else if (confPercentage >= 40) meter.style.background = "#eab308";
         else meter.style.background = "#ef4444";
+        
+        document.getElementById('angular-graph').style.display = 'block';
+        const simScore = Math.min(1.0, Math.max(0.0, simData.score));
+        const angleRad = Math.acos(simScore);
+        const angleDeg = angleRad * (180 / Math.PI);
+        const lineLen = 230;
+        const ux = 20 + lineLen * Math.cos(angleRad);
+        const uy = 140 - lineLen * Math.sin(angleRad);
+        
+        const svgUserQuery = document.getElementById('svg-user-query');
+        svgUserQuery.style.transition = 'all 1s ease-out';
+        svgUserQuery.setAttribute('x2', ux);
+        svgUserQuery.setAttribute('y2', uy);
+        
+        const arcRadius = 40;
+        const ax = 20 + arcRadius * Math.cos(angleRad);
+        const ay = 140 - arcRadius * Math.sin(angleRad);
+        const d = `M ${20 + arcRadius} 140 A ${arcRadius} ${arcRadius} 0 0 0 ${ax} ${ay}`;
+        document.getElementById('svg-angle-arc').setAttribute('d', d);
+        document.getElementById('svg-label-angle').textContent = `${angleDeg.toFixed(1)}°`;
 
         activateCard('card-similarity', 'conn-3');
         await sleep(1000);
@@ -232,10 +267,21 @@ async function sendMessage() {
         activateCard('card-decision', 'conn-4');
         
         const decCard = document.getElementById('card-decision');
+        const diagnosticDiv = document.getElementById('failure-diagnostic');
+        diagnosticDiv.style.display = 'none';
+
         if (decisionData.success) {
             decCard.classList.add('success');
         } else {
             decCard.classList.add('error');
+            diagnosticDiv.style.display = 'block';
+            if (Object.keys(vectorizeData.important_terms).length === 0) {
+                diagnosticDiv.innerText = "Reason: Your query did not contain any words recognized in our vocabulary.";
+            } else if (Object.keys(simData.trigger_words).length === 0) {
+                diagnosticDiv.innerText = "Reason: No overlapping keywords found between your query and the FAQ dataset.";
+            } else {
+                diagnosticDiv.innerText = `Reason: Similarity score (${simData.score.toFixed(2)}) did not meet the required confidence threshold (${threshold}).`;
+            }
         }
 
         // Save session log
