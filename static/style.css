@@ -132,7 +132,13 @@ body::after {
     padding: 20px;
     background: rgba(255, 255, 255, 0.03);
     border-bottom: 1px solid var(--card-border);
-    text-align: center;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.chat-header-title {
+    text-align: left;
 }
 
 .chat-header h2 {

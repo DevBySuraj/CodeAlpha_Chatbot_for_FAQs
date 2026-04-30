@@ -8,6 +8,14 @@ const downloadLogBtn = document.getElementById('download-log-btn');
 let chatHistory = [];
 let sessionLogs = [];
 
+document.getElementById('clear-chat-btn').addEventListener('click', () => {
+    localStorage.removeItem('surgicalFaqChat');
+    chatBox.innerHTML = '<div class="message bot">Hello! I\'m the Surgical FAQ Bot. Ask me anything and watch how I process your question on the right!</div>';
+    chatHistory = [];
+    sessionLogs = [];
+    resetPipeline();
+});
+
 // Load chat history from localStorage
 function loadChatHistory() {
     const saved = localStorage.getItem('surgicalFaqChat');
