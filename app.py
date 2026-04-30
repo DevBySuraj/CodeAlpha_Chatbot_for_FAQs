@@ -87,12 +87,114 @@ app = Flask(__name__)
 def home():
     return render_template('index.html')
 
-@app.route('/ask', methods=['POST'])
-def ask():
+@app.route('/process', methods=['POST'])
+def process():
     data = request.get_json()
-    user_query = data.get("message")
-    response_text = get_chatbot_response(user_query)
-    return jsonify({"response": response_text})
+    user_query = data.get("message", "")
+    
+    # Process
+    text = user_query.lower()
+    text = text.translate(str.maketrans('', '', string.punctuation))
+    
+    # 1. Tokenize
+    tokens = nltk.word_tokenize(text)
+    
+    # 2. Stop-word removal
+    no_stop_tokens = [word for word in tokens if word not in stop_words]
+    
+    # 3. Lemmatize
+    clean_tokens = [lemmatizer.lemmatize(word) for word in no_stop_tokens]
+    
+    cleaned_text = " ".join(clean_tokens)
+    
+    return jsonify({
+        "raw": user_query,
+        "tokens": tokens,
+        "no_stop_tokens": no_stop_tokens,
+        "cleaned_tokens": clean_tokens,
+        "cleaned_text": cleaned_text
+    })
+
+@app.route('/vectorize', methods=['POST'])
+def vectorize():
+    data = request.get_json()
+    cleaned_text = data.get("cleaned_text", "")
+    
+    user_vector = tf.transform([cleaned_text])
+    
+    # Get non-zero features and their weights
+    feature_names = tf.get_feature_names_out()
+    non_zero_indices = user_vector.nonzero()[1]
+    
+    important_terms = {feature_names[idx]: float(user_vector[0, idx]) for idx in non_zero_indices}
+    # Sort by weight
+    important_terms = dict(sorted(important_terms.items(), key=lambda item: item[1], reverse=True))
+    
+    return jsonify({
+        "important_terms": important_terms
+    })
+
+@app.route('/similarity', methods=['POST'])
+def similarity():
+    data = request.get_json()
+    cleaned_text = data.get("cleaned_text", "")
+    
+    user_vector = tf.transform([cleaned_text])
+    similarities = cosine_similarity(user_vector, tf_matrix)
+    
+    # Get top 5 indices
+    top_indices = np.argsort(similarities[0])[-5:][::-1]
+    
+    candidates = []
+    for idx in top_indices:
+        candidates.append({
+            "index": int(idx),
+            "score": float(similarities[0][idx]),
+            "question": faq['Question'].iloc[idx] if 'Question' in faq.columns else "Matched FAQ",
+            "answer": faq['Answer'].iloc[idx] if 'Answer' in faq.columns else "Matched Answer"
+        })
+        
+    best_match_index = candidates[0]['index']
+    max_similarity = candidates[0]['score']
+    matched_question = candidates[0]['question']
+    
+    # Word Cloud Triggers
+    best_faq_vector = tf_matrix[best_match_index]
+    intersection = user_vector.multiply(best_faq_vector)
+    
+    feature_names = tf.get_feature_names_out()
+    non_zero_indices = intersection.nonzero()[1]
+    
+    trigger_words = {feature_names[idx]: float(intersection[0, idx]) for idx in non_zero_indices}
+    trigger_words = dict(sorted(trigger_words.items(), key=lambda item: item[1], reverse=True))
+    
+    return jsonify({
+        "best_match_index": best_match_index,
+        "score": max_similarity,
+        "matched_question": matched_question,
+        "candidates": candidates,
+        "trigger_words": trigger_words
+    })
+
+@app.route('/decision', methods=['POST'])
+def decision():
+    data = request.get_json()
+    best_match_index = data.get("best_match_index", 0)
+    score = data.get("score", 0.0)
+    threshold = data.get("threshold", 0.2)
+    
+    if score > threshold:
+        response_text = faq['Answer'].iloc[best_match_index]
+        success = True
+    else:
+        response_text = "I'm sorry, I don't understand that question. Could you try rephrasing?"
+        success = False
+        
+    return jsonify({
+        "response": response_text,
+        "confidence": score,
+        "success": success
+    })
 
 if __name__ == "__main__":
     app.run(debug=True)
